@@ -18,3 +18,10 @@ This file is intentionally minimal as a template.
 
 
 # TODO: Add actual ORM models for Doctor, Patient, Clinic, Registration
+from typing import Optional
+import pytz
+from sqlmodel import SQLModel, Field, UniqueConstraint
+from sqlalchemy import Column, DateTime
+from datetime import datetime
+import uuid
+from .constant import Constant

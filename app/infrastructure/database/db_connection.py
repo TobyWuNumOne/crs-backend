@@ -11,11 +11,15 @@ Replace with SQLAlchemy AsyncSession or standard session factory as required.
 # SessionLocal = sessionmaker(bind=engine)
 
 
-def get_db():
-    """Yields a DB session. Replace with real session management implementation."""
-    # session = SessionLocal()
-    # try:
-    #     yield session
-    # finally:
-    #     session.close()
-    raise NotImplementedError()
+from sqlmodel import create_engine, Session, SQLModel
+from sqlalchemy.orm import sessionmaker
+from ...core.config import settings
+from .models.users_model import *
+
+engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI()))
+
+SessionDb = sessionmaker(autocommit=False, autoflush=False, bind=engine, class_=Session)
+
+
+def create_tables():
+    SQLModel.metadata.create_all(engine)
