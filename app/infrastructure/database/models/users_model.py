@@ -30,7 +30,7 @@ class User(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)
 
     # Auth
-    account: str = Field(max_length=50, index=True, unique=True)
+    account: str = Field(max_length=50, index=True, unique=True)  # unique
     hashed_password: str = Field(max_length=255)
     is_active: bool = Field(default=True)
 
@@ -85,7 +85,7 @@ class Clinic(SQLModel, table=True):
 class Registration(SQLModel, table=True):
     __tablename__ = "registrations"
     __table_args__ = (
-        UniqueConstraint("clinic_id", "patient_id", name="uq_clinic_patient"),
+        UniqueConstraint("clinic_id", "patient_id", name="uq_clinic_patient"),  #
     )
 
     id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)
@@ -108,7 +108,7 @@ class Registration(SQLModel, table=True):
         default_factory=now_tpe,
     )
     updated_at: datetime = Field(
-        sa_column=Column(DateTime(timezone=True), default=now_tpe, onupdate=now_tpe),
+        sa_column=Column(DateTime(timezone=True), default=now_tpe, onupdate=now_tpe),  #
         default_factory=now_tpe,
     )
 

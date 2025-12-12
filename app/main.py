@@ -14,10 +14,6 @@ from .middleware.exceptions.middleware import app_error_handler
 app = FastAPI(title="Clinic Registration System")
 
 
-# register middleware (access logger, exception handler)
-app.middleware("http")(access_logger)
-app.middleware("http")(app_error_handler)
-
 # include API router with prefix from config
 app.include_router(api_router, prefix=settings.API_PREFIX)
 # include system routes (healthchecks, etc.) under API prefix
