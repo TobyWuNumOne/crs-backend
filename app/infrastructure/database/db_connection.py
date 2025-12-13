@@ -16,7 +16,7 @@ from sqlalchemy.orm import sessionmaker
 from ...core.config import settings
 from .models.users_model import *
 
-engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI()))
+engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI()).replace("postgresql://", "postgresql+psycopg://"), echo=True)
 
 SessionDb = sessionmaker(autocommit=False, autoflush=False, bind=engine, class_=Session)
 

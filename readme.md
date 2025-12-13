@@ -1,51 +1,111 @@
-# Develop the following CRUD backend app with the following specs
+# Clinic Registration System Backend
 
-```json
-Package manager: uv
-Database: PostgresDB
-Backend: FastAPI
-Authentication: jwt tokens
+FastAPI-based backend for clinic registration system with PostgreSQL database.
 
-You may write mock frontend code to test your app, but we only review the API docs and its functionailty.
+## Features
 
+- User management (Doctors, Patients)
+- Clinic scheduling
+- Registration management
+- RESTful API with automatic OpenAPI documentation
+
+## Setup
+
+### Prerequisites
+
+- Docker and Docker Compose
+- Python 3.12+
+
+### Local Development
+
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   uv sync --extra dev
+   ```
+
+3. Set up environment variables in `.env` file:
+   ```
+   POSTGRES_USER=your_db_user
+   POSTGRES_PASSWORD=your_db_password
+   POSTGRES_SERVER=localhost
+   POSTGRES_PORT=5432
+   POSTGRES_DB=your_db_name
+   ENVIRONMENT=development
+   PORT=8000
+   HOST=0.0.0.0
+   RELOAD=true
+   WORKERS=1
+   DEVTEAM_PATH=/path/to/project
+   API_PREFIX=/api
+   ```
+
+4. Run the application:
+   ```bash
+   uv run uvicorn app.main:app --reload
+   ```
+
+### Docker Testing
+
+To run tests with Docker:
+
+```bash
+./run_tests.sh
 ```
 
-Let’s develop a clinic registration system.
+This will:
+1. Build the Docker image
+2. Start PostgreSQL database
+3. Run the application
+4. Execute tests
+5. Clean up containers
 
-1. Users: Doctors, Patients
-    1. For each user we record first name, last name, sex, birthdate, role.
-2. Clinics:
-    1. For each clinic we record: doctor ID, date, time slot(上午下午夜診)
-3. Registrations:
-    1. For each registration we record: clinic ID, patient, status, registered_at, cancelled_at.
+### Database Models
 
-If you feel that you need more columns, feel free to add them.
+The system uses SQLModel with the following main entities:
 
-Please develop at least these APIs:
+- **User**: Doctors and patients with authentication
+- **Clinic**: Doctor's available time slots
+- **Registration**: Patient bookings for clinics
 
-1. Registration for doctors and patients (Free registration for this project.)
-2. A doctor can:
+Tables are automatically created when the application starts via `create_tables()` in `app/main.py`.
 
-    Add a clinic. Delete a clinic.
+### Testing
 
-    Register a patient for a clinic.
+Run tests locally:
+```bash
+uv run pytest
+```
 
-    Check all patients for his/her clinic on a given day.
+Tests include:
+- Model creation and validation
+- Database relationships
+- Table creation verification
 
-3. A patient can:
+### API Documentation
 
-    Register for a clinic.
+When running, visit `http://localhost:8000/docs` for interactive API documentation.
 
-    Check his/her registered clinic.
+## Project Structure
 
-    A patient can not register other patients for a clinic.
-
-4. Provide statistics:
-
-    How many doctors and patients?
-
-    How many clinics for a given day?
-
-The app should be functional/usable. It’s OK if you have bugs, but it’s not OK if it doesn’t work.
+```
+crs-backend/
+├── app/
+│   ├── main.py              # FastAPI application entry point
+│   ├── core/
+│   │   └── config.py        # Application configuration
+│   ├── infrastructure/
+│   │   └── database/
+│   │       ├── db_connection.py    # Database connection and session
+│   │       └── models/
+│   │           ├── users_model.py  # SQLModel definitions
+│   │           └── constant.py     # Enums and constants
+│   └── api/                 # API routes
+├── tests/                   # Test files
+├── Dockerfile               # Docker image definition
+├── docker-compose.yml       # Docker services for testing
+├── pyproject.toml          # Project dependencies
+└── pytest.ini              # Test configuration
+```
 
 Please do this on your local machine. I’ll get a remote PostgresDB for you later.
