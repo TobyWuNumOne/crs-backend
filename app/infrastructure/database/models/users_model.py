@@ -15,7 +15,7 @@ from uuid import UUID, uuid4
 from datetime import datetime, date
 from sqlalchemy import Column, DateTime
 from sqlmodel import SQLModel, Field, Relationship, UniqueConstraint
-from .constant import *
+from .constant import Role, Sex, TimeSlot, RegistrationStatus
 
 taipei_tz = pytz.timezone("Asia/Taipei")
 

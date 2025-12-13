@@ -8,8 +8,6 @@ from fastapi import FastAPI
 from .api.base import api_router
 from .api import system
 from .core.config import settings
-from .middleware.logger.middleware import access_logger
-from .middleware.exceptions.middleware import app_error_handler
 
 app = FastAPI(title="Clinic Registration System")
 
