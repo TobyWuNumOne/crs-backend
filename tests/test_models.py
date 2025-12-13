@@ -2,7 +2,7 @@
 
 import pytest
 import os
-from sqlmodel import Session, select, create_engine
+from sqlmodel import Session, select, create_engine, text
 from sqlalchemy.orm import sessionmaker
 from app.infrastructure.database.models.users_model import User, Clinic, Registration
 from app.infrastructure.database.models.constant import (
@@ -26,7 +26,7 @@ def test_engine():
     return engine
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def db_session(test_engine):
     """Create tables and provide a database session for testing."""
     # Import here to avoid early engine creation
@@ -37,20 +37,25 @@ def db_session(test_engine):
     )
     from sqlmodel import SQLModel
 
-    # Create all tables
+    # Create all tables (idempotent)
     SQLModel.metadata.create_all(test_engine)
 
     SessionDb = sessionmaker(
         autocommit=False, autoflush=False, bind=test_engine, class_=Session
     )
     with SessionDb() as session:
+        # Clean up data before each test
+        session.execute(text("DELETE FROM registrations"))
+        session.execute(text("DELETE FROM clinics"))
+        session.execute(text("DELETE FROM users"))
+        session.commit()
         yield session
 
 
 def test_user_model_creation(db_session):
     """Test User model creation and basic fields."""
     user = User(
-        account="testuser",
+        account="testuser_unique",
         hashed_password="hashedpass",
         first_name="Test",
         last_name="User",
@@ -64,7 +69,7 @@ def test_user_model_creation(db_session):
     db_session.refresh(user)
 
     assert user.id is not None
-    assert user.account == "testuser"
+    assert user.account == "testuser_unique"
     assert user.is_active is True
     assert user.role == Role.patient
 
@@ -73,7 +78,7 @@ def test_clinic_model_creation(db_session):
     """Test Clinic model creation."""
     # First create a doctor user
     doctor = User(
-        account="doctor1",
+        account="doctor1_unique",
         hashed_password="hashedpass",
         first_name="Dr",
         last_name="Smith",
@@ -105,7 +110,7 @@ def test_registration_model_creation(db_session):
     """Test Registration model creation."""
     # Create patient
     patient = User(
-        account="patient1",
+        account="patient1_unique",
         hashed_password="hashedpass",
         first_name="John",
         last_name="Doe",
@@ -118,7 +123,7 @@ def test_registration_model_creation(db_session):
 
     # Create doctor
     doctor = User(
-        account="doctor2",
+        account="doctor2_unique",
         hashed_password="hashedpass",
         first_name="Dr",
         last_name="Jones",
@@ -156,20 +161,42 @@ def test_registration_model_creation(db_session):
 
 def test_relationships(db_session):
     """Test model relationships."""
-    # Query a user with relationships
-    stmt = select(User).where(User.account == "doctor1")
-    doctor = db_session.exec(stmt).first()
+    # Create test data for this test
+    doctor = User(
+        account="doctor_rel_test",
+        hashed_password="hashedpass",
+        first_name="Dr",
+        last_name="Test",
+        sex=Sex.male,
+        birthdate=date(1980, 1, 1),
+        role=Role.doctor,
+    )
+    db_session.add(doctor)
+    db_session.commit()
 
-    assert doctor is not None
-    assert len(doctor.clinics) >= 0  # May have clinics
+    clinic = Clinic(
+        doctor_id=doctor.id,
+        date=date(2024, 12, 15),
+        time_slot=TimeSlot.morning,
+        capacity=10,
+    )
+    db_session.add(clinic)
+    db_session.commit()
+
+    # Query a user with relationships
+    stmt = select(User).where(User.account == "doctor_rel_test")
+    doctor_found = db_session.exec(stmt).first()
+
+    assert doctor_found is not None
+    assert len(doctor_found.clinics) >= 0  # May have clinics
 
     # Query clinic with relationships
     stmt = select(Clinic).where(Clinic.doctor_id == doctor.id)
-    clinic = db_session.exec(stmt).first()
+    clinic_found = db_session.exec(stmt).first()
 
-    if clinic:
-        assert clinic.doctor.id == doctor.id
-        assert len(clinic.registrations) >= 0
+    if clinic_found:
+        assert clinic_found.doctor.id == doctor.id
+        assert len(clinic_found.registrations) >= 0
 
 
 def test_table_creation():

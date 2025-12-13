@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# Check if any conflicting containers are running
+echo "Checking for existing containers..."
+if docker ps | grep -q "crs-backend"; then
+    echo "Warning: Found existing crs-backend containers. Stopping them first..."
+    docker-compose down
+fi
+
 # Build and start Docker services
 echo "Building and starting Docker services..."
 docker-compose up -d --build

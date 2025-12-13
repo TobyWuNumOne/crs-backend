@@ -8,7 +8,7 @@ services:
             POSTGRES_PASSWORD: testpass
             POSTGRES_DB: testdb
         ports:
-            - '5432:5432'
+            - '5433:5432'  # 使用不同端口避免與開發環境衝突
         volumes:
             - postgres_data:/var/lib/postgresql/data
 
@@ -28,7 +28,7 @@ services:
             DEVTEAM_PATH: /app
             API_PREFIX: /api
         ports:
-            - '8000:8000'
+            - '8001:8000'  # 使用不同端口避免與開發環境衝突
         depends_on:
             - db
         volumes:

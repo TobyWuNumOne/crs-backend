@@ -57,11 +57,14 @@ To run tests with Docker:
 
 This will:
 
-1. Build the Docker image
-2. Start PostgreSQL database
-3. Run the application
-4. Execute tests
-5. Clean up containers
+1. Check and stop any existing test containers
+2. Build the Docker image
+3. Start PostgreSQL database (port 5433) and application (port 8001)
+4. Run the application (automatically creates tables)
+5. Execute tests
+6. Clean up containers
+
+**Note**: Test environment uses different ports (5433 for DB, 8001 for app) to avoid conflicts with development environment.
 
 ### Database Models
 
