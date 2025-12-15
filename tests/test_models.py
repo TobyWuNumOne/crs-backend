@@ -20,7 +20,9 @@ def test_engine():
     """Create a test database engine."""
     # Use test database URL with explicit psycopg3 driver
     database_url = os.getenv(
-        "DATABASE_URL", "postgresql+psycopg://testuser:testpass@db:5432/testdb"
+        "DATABASE_URL",
+        # Default to localhost port mapping used by docker-compose (5433 -> 5432 in container)
+        "postgresql+psycopg://testuser:testpass@127.0.0.1:5433/testdb",
     )
     engine = create_engine(database_url, echo=False)
     return engine

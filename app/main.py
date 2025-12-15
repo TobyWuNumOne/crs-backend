@@ -8,11 +8,12 @@ from .infrastructure.database.db_connection import create_tables
 from .api.base import api_router
 from .api import system
 from .core.config import settings
+from .application.crud.users import create_admin
 
 app = FastAPI(title="Clinic Registration System")
 
 create_tables()
-
+create_admin()
 # include API router with prefix from config
 app.include_router(api_router, prefix=settings.API_PREFIX)
 # include system routes (healthchecks, etc.) under API prefix
