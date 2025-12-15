@@ -1,6 +1,14 @@
 """Database adapters and ORM models.
 
-Implement SQLAlchemy models and connection helpers in this package.
+Infrastructure layer: connection helpers, session DI, and ORM models.
 """
 
-__all__ = ["XXX_model", "XXX_connection"]
+from .db_connection import SessionDb
+from .session import SessionDep, get_db_session, get_session
+
+__all__ = [
+    "SessionDb",
+    "SessionDep",
+    "get_db_session",
+    "get_session",
+]
