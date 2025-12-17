@@ -1,3 +1,8 @@
+import os
+
+# Disable crypt before importing passlib to avoid deprecated crypt warnings
+os.environ.setdefault("PASSLIB_DISABLE_CRYPT", "1")
+
 from passlib.context import CryptContext
 from sqlmodel import select
 from sqlalchemy.exc import IntegrityError
@@ -16,7 +21,8 @@ logger = logging.getLogger("debug_log")
 
 taipei_tz = pytz.timezone("Asia/Taipei")
 
-bcrypt_context = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto")
+# Use only pbkdf2_sha256 to avoid crypt fallback warnings
+bcrypt_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 
 def create_admin():  # form aivc

@@ -15,17 +15,21 @@ from datetime import date, datetime
 import pytz
 
 
+def _make_engine():
+    """Build an engine; default to in-memory SQLite to avoid external DB dependency."""
+
+    database_url = os.getenv("DATABASE_URL")
+    if database_url:
+        return create_engine(database_url, echo=False)
+    return create_engine(
+        "sqlite:///:memory:", echo=False, connect_args={"check_same_thread": False}
+    )
+
+
 @pytest.fixture(scope="session")
 def test_engine():
     """Create a test database engine."""
-    # Use test database URL with explicit psycopg3 driver
-    database_url = os.getenv(
-        "DATABASE_URL",
-        # Default to localhost port mapping used by docker-compose (5433 -> 5432 in container)
-        "postgresql+psycopg://testuser:testpass@127.0.0.1:5433/testdb",
-    )
-    engine = create_engine(database_url, echo=False)
-    return engine
+    return _make_engine()
 
 
 @pytest.fixture(scope="function")
