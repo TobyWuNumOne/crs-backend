@@ -7,11 +7,12 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 
 from app.infrastructure.database.models.users_model import User
+from app.core.config import settings
 
-# Load config from env; in real app tie to settings
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-secret-change-me")
-ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", "60"))
+# Load config from Settings (pydantic BaseSettings) so env/.env can override
+SECRET_KEY = settings.JWT_SECRET_KEY
+ALGORITHM = settings.JWT_ALGORITHM
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.JWT_EXPIRE_MINUTES
 
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 

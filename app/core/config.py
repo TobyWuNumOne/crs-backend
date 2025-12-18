@@ -26,6 +26,10 @@ class Settings(BaseSettings):
     POSTGRES_DB: str
     # Base path for API routes (e.g. /api or /api/v1)
     API_PREFIX: str = "/api"
+    # JWT / Auth settings
+    JWT_SECRET_KEY: str = "dev-secret-change-me"
+    JWT_ALGORITHM: str = "HS256"
+    JWT_EXPIRE_MINUTES: int = 60
 
     def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
 
