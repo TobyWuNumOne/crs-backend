@@ -27,14 +27,13 @@ from app.infrastructure.database.models.users_model import Clinic, Registration,
 
 
 def _make_engine():
-    """Build an engine; default to in-memory SQLite to avoid external DB dependency."""
+    """Build an engine; default to docker Postgres service if env not provided."""
 
-    database_url = os.getenv("DATABASE_URL")
-    if database_url:
-        return create_engine(database_url, echo=False)
-    return create_engine(
-        "sqlite:///:memory:", echo=False, connect_args={"check_same_thread": False}
+    database_url = os.getenv(
+        "DATABASE_URL",
+        "postgresql+psycopg://testuser:testpass@db:5432/testdb",
     )
+    return create_engine(database_url, echo=False)
 
 
 @pytest.fixture(scope="session")

@@ -34,5 +34,7 @@ def login(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
         )
-    token = auth_service.create_access_token(data={"sub": str(user.id), "role": user.role})
+    token = auth_service.create_access_token(
+        data={"sub": str(user.id), "role": user.role}
+    )
     return {"access_token": token, "token_type": "bearer"}
