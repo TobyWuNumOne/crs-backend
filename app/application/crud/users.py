@@ -14,6 +14,7 @@ import pytz
 from ...infrastructure.database.models.users_model import User
 from ...infrastructure.database.models.constant import Role, Sex
 from ...application.schemas.user import UserCreate, UserUpdate
+from ...application.services.auth_service import hash_password
 from ...infrastructure.database import SessionDep
 
 
@@ -92,7 +93,7 @@ def create_user(session: SessionDep, payload: UserCreate) -> User:
 
     new_user = User(
         account=payload.account,
-        hashed_password=bcrypt_context.hash(payload.password[:72]),
+        hashed_password=hash_password(payload.password[:72]),
         first_name=payload.first_name,
         last_name=payload.last_name,
         sex=payload.sex,
@@ -142,7 +143,7 @@ def change_password(session: SessionDep, user_id: UUID, new_password: str) -> No
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
 
-    user.hashed_password = bcrypt_context.hash(new_password[:72])
+    user.hashed_password = hash_password(new_password[:72])
     session.add(user)
     session.commit()
 
