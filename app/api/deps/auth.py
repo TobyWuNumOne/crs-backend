@@ -14,7 +14,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
 def get_current_user(
-    token: Annotated[str, Depends(oauth2_scheme)], session: SessionDep = Depends()
+    token: Annotated[str, Depends(oauth2_scheme)], session: SessionDep
 ):
     payload = auth_service.decode_token(token)
     user_id = payload.get("sub")

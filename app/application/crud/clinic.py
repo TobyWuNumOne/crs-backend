@@ -36,7 +36,18 @@ def list_clinics_by_doctor(
     return list(session.exec(statement).all())
 
 
-def create_clinic(session: SessionDep, doctor_id: UUID, payload: ClinicCreate) -> Clinic:
+def list_clinics(session: SessionDep, active_only: bool = False) -> list[Clinic]:
+    """List all clinics; optionally filter active ones only."""
+
+    statement = select(Clinic)
+    if active_only:
+        statement = statement.where(Clinic.is_active.is_(True))
+    return list(session.exec(statement).all())
+
+
+def create_clinic(
+    session: SessionDep, doctor_id: UUID, payload: ClinicCreate
+) -> Clinic:
     _get_doctor_or_404(session, doctor_id)
     clinic = Clinic(
         doctor_id=doctor_id,
