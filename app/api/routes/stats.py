@@ -23,7 +23,7 @@ def get_clinic_stats(
     target_date: Optional[date] = Query(None, alias="date"),
 ):
     """Return clinic statistics (public).
-    
+
     If date is provided, returns count for that date.
     Otherwise, returns overall statistics.
     """

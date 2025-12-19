@@ -37,21 +37,23 @@ def clinic_stats(session: Session) -> dict:
     # Total clinics
     total_clinics_stmt = select(func.count(Clinic.id))
     total_clinics = session.exec(total_clinics_stmt).one()
-    
+
     # Active clinics
     active_clinics_stmt = select(func.count(Clinic.id)).where(Clinic.is_active == True)
     active_clinics = session.exec(active_clinics_stmt).one()
-    
+
     # Total registrations
     total_registrations_stmt = select(func.count(Registration.id))
     total_registrations = session.exec(total_registrations_stmt).one()
-    
+
     # Registrations by status
-    status_stmt = select(Registration.status, func.count(Registration.id)).group_by(Registration.status)
+    status_stmt = select(Registration.status, func.count(Registration.id)).group_by(
+        Registration.status
+    )
     status_counts = {status.value: 0 for status in RegistrationStatus}
     for status, cnt in session.exec(status_stmt).all():
         status_counts[status.value] = cnt
-    
+
     return {
         "total_clinics": total_clinics,
         "active_clinics": active_clinics,
