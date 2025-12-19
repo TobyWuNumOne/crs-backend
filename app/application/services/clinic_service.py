@@ -17,14 +17,15 @@ from app.infrastructure.database.models.users_model import Clinic, User
 
 
 def create_clinic(session: Session, actor: User, payload: ClinicCreate) -> Clinic:
-    """Only doctors can create clinics (for themselves)."""
-    if actor.role != Role.doctor:
+    """Doctors create for self; admin can create for any doctor via payload.doctor_id."""
+    if actor.role not in {Role.doctor, Role.admin}:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only doctors can create clinics",
         )
+    target_doctor_id = payload.doctor_id or actor.id
     try:
-        return clinic_crud.create_clinic(session, actor.id, payload)
+        return clinic_crud.create_clinic(session, target_doctor_id, payload)
     except IntegrityError:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -57,8 +58,8 @@ def list_clinics_by_doctor(
 def update_clinic(
     session: Session, actor: User, clinic_id: UUID, payload: ClinicUpdate
 ) -> Clinic:
-    """Only the owning doctor can update their clinic."""
-    if actor.role != Role.doctor:
+    """Doctor owner or admin can update a clinic."""
+    if actor.role not in {Role.doctor, Role.admin}:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only doctors can update clinics",
@@ -68,7 +69,7 @@ def update_clinic(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Clinic not found"
         )
-    if clinic.doctor_id != actor.id:
+    if actor.role != Role.admin and clinic.doctor_id != actor.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Not your clinic"
         )
@@ -81,8 +82,8 @@ def update_clinic(
 
 
 def delete_clinic(session: Session, actor: User, clinic_id: UUID) -> None:
-    """Only the owning doctor can delete their clinic."""
-    if actor.role != Role.doctor:
+    """Doctor owner or admin can delete a clinic."""
+    if actor.role not in {Role.doctor, Role.admin}:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only doctors can delete clinics",
@@ -92,7 +93,7 @@ def delete_clinic(session: Session, actor: User, clinic_id: UUID) -> None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Clinic not found"
         )
-    if clinic.doctor_id != actor.id:
+    if actor.role != Role.admin and clinic.doctor_id != actor.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Not your clinic"
         )

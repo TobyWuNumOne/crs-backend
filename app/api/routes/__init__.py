@@ -6,6 +6,6 @@ Examples:
 - routes/registrations.py -> endpoints for registrations
 """
 
-from . import auth, clinics, registrations
+from . import auth, clinics, registrations, stats
 
-__all__ = ["auth", "clinics", "registrations"]
+__all__ = ["auth", "clinics", "registrations", "stats"]

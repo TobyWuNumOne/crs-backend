@@ -20,6 +20,7 @@ class RegistrationCreate(SQLModel):
 
     - Patient flow: patient registers self for a clinic.
     - Doctor flow: doctor registers a specific patient for a clinic.
+    - Admin flow: admin registers any patient (or doctor) for a clinic.
 
     NOTE: service layer must enforce permissions.
     """

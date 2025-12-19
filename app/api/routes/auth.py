@@ -7,6 +7,7 @@ from app.application.crud import users as user_crud
 from app.application.schemas.user import UserCreate, UserRead
 from app.application.services import auth_service
 from app.infrastructure.database import SessionDep
+from app.api.deps.auth import get_current_user
 
 router = APIRouter()
 
@@ -38,3 +39,9 @@ def login(
         data={"sub": str(user.id), "role": user.role}
     )
     return {"access_token": token, "token_type": "bearer"}
+
+
+@router.get("/me", response_model=UserRead, tags=["auth"])
+def get_me(current_user=Depends(get_current_user)):
+    """Get current authenticated user information."""
+    return current_user

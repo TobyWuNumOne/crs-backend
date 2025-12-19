@@ -19,11 +19,15 @@ class ClinicBase(SQLModel):
 
 
 class ClinicCreate(SQLModel):
-    """Doctor creates a clinic for a given date + time_slot."""
+    """Doctor (or admin) creates a clinic for a given date + time_slot.
+
+    Admin can specify doctor_id to create on behalf of a doctor.
+    """
 
     date: date
     time_slot: TimeSlot
     capacity: Optional[int] = None
+    doctor_id: Optional[UUID] = None
 
 
 class ClinicRead(ClinicBase):

@@ -26,12 +26,18 @@ def create_registration(
 
     - Patients can only register themselves (patient_id ignored).
     - Doctors can register any patient or themselves if patient_id omitted.
+    - Admins can register any patient/doctor (patient_id required if not self).
     - Others are forbidden.
     """
     if actor.role == Role.patient:
         target_patient_id = actor.id
     elif actor.role == Role.doctor:
         target_patient_id = patient_id or actor.id
+    elif actor.role == Role.admin:
+        target_patient_id = patient_id or actor.id
+        if patient_id is None:
+            # Admin should explicitly choose when registering others; fallback to self is allowed but unusual
+            target_patient_id = actor.id
     else:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Not allowed to register"
@@ -96,7 +102,7 @@ def list_by_clinic(
     status_filter: RegistrationStatus | None = None,
 ) -> list[Registration]:
     """Only doctors can list registrations for a clinic."""
-    if actor.role != Role.doctor:
+    if actor.role not in {Role.doctor, Role.admin}:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only doctors can view clinic registrations",
@@ -135,7 +141,7 @@ def cancel_registration(
 
 def delete_registration(session: Session, actor: User, registration_id: UUID) -> None:
     """Only doctors can delete a registration."""
-    if actor.role != Role.doctor:
+    if actor.role not in {Role.doctor, Role.admin}:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only doctors can delete registrations",
@@ -146,5 +152,5 @@ def delete_registration(session: Session, actor: User, registration_id: UUID) ->
 
 def _check_owner_or_doctor(actor: User, reg: Registration) -> None:
     """Raise 403 if actor is neither the owner nor a doctor."""
-    if reg.patient_id != actor.id and actor.role != Role.doctor:
+    if reg.patient_id != actor.id and actor.role not in {Role.doctor, Role.admin}:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not allowed")

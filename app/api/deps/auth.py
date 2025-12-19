@@ -31,13 +31,13 @@ def get_current_user(
 
 
 def get_current_doctor(current_user=Depends(get_current_user)):
-    if current_user.role != Role.doctor:
+    if current_user.role not in {Role.doctor, Role.admin}:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Doctor only")
     return current_user
 
 
 def get_current_patient(current_user=Depends(get_current_user)):
-    if current_user.role != Role.patient:
+    if current_user.role not in {Role.patient, Role.admin, Role.doctor}:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Patient only"
         )
