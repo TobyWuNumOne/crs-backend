@@ -17,3 +17,4 @@ api_router.include_router(
 api_router.include_router(
     registrations.router, prefix="", tags=["registrations"]
 )  # registrations define full path
+api_router.include_router(stats.router, prefix="", tags=["stats"])
