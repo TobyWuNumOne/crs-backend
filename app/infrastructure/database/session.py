@@ -26,6 +26,10 @@ def get_db_session() -> Generator[Session, None, None]:  #
         session.rollback()
         logger.error(f"Database error: {e}")
         raise HTTPException(status_code=500, detail="Database operation failed")
+    except HTTPException:
+        # Re-raise HTTPException without modification (e.g., 401, 403, 404)
+        session.rollback()
+        raise
     except Exception as e:  # pragma: no cover - safety net
         session.rollback()
         logger.error(f"Unexpected error: {e}")

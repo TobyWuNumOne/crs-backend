@@ -1,8 +1,9 @@
 """Public statistics endpoints."""
 
 from datetime import date
+from typing import Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Query
 
 from app.application.services import stats_service
 from app.infrastructure.database import SessionDep
@@ -17,9 +18,15 @@ def get_user_counts(session: SessionDep):
 
 
 @router.get("/stats/clinics")
-def get_clinic_count(
+def get_clinic_stats(
     session: SessionDep,
-    target_date: date = Query(..., alias="date"),
+    target_date: Optional[date] = Query(None, alias="date"),
 ):
-    """Return number of clinics for a given date (public)."""
-    return {"count": stats_service.clinic_count_by_date(session, target_date)}
+    """Return clinic statistics (public).
+    
+    If date is provided, returns count for that date.
+    Otherwise, returns overall statistics.
+    """
+    if target_date:
+        return {"count": stats_service.clinic_count_by_date(session, target_date)}
+    return stats_service.clinic_stats(session)
