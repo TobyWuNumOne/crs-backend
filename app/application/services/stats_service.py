@@ -18,7 +18,10 @@ def user_counts(session: Session) -> dict[str, int]:
     counts = {role.value: 0 for role in Role}
     for role, cnt in session.exec(stmt).all():
         counts[role.value] = cnt
-    return {"doctors": counts[Role.doctor.value], "patients": counts[Role.patient.value]}
+    return {
+        "doctors": counts[Role.doctor.value],
+        "patients": counts[Role.patient.value],
+    }
 
 
 def clinic_count_by_date(session: Session, target_date: date) -> int:
