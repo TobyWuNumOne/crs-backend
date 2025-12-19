@@ -127,14 +127,14 @@ def test_clinic_crud_flow(client: TestClient):
 
 def test_registration_flow(client: TestClient):
     # Arrange doctor + clinic
-    _register_user(client, "doc_reg", Role.doctor)
+    doc_user = _register_user(client, "doc_reg", Role.doctor)
     doc_token = _login(client, "doc_reg", "secret123")
     resp_clinic = client.post(
         "/clinics",
         json={
             "date": "2024-12-30",
             "time_slot": TimeSlot.afternoon.value,
-            "capacity": 2,
+            "capacity": 3,
         },
         headers=auth_header(doc_token),
     )
@@ -142,8 +142,12 @@ def test_registration_flow(client: TestClient):
     clinic_id = resp_clinic.json()["id"]
 
     # Arrange patient
-    _register_user(client, "pat_reg", Role.patient)
+    pat_user = _register_user(client, "pat_reg", Role.patient)
     pat_token = _login(client, "pat_reg", "secret123")
+
+    # Arrange another patient
+    pat2_user = _register_user(client, "pat_reg2", Role.patient)
+    pat2_id = pat2_user["id"]
 
     # Patient registers
     resp_reg = client.post(
@@ -154,10 +158,33 @@ def test_registration_flow(client: TestClient):
     assert resp_reg.status_code == status.HTTP_201_CREATED
     reg_id = resp_reg.json()["id"]
 
+    # Doctor registers another patient
+    resp_reg_doc_for_other = client.post(
+        "/registrations",
+        json={"clinic_id": clinic_id, "patient_id": pat2_id},
+        headers=auth_header(doc_token),
+    )
+    assert resp_reg_doc_for_other.status_code == status.HTTP_201_CREATED
+    reg_other_id = resp_reg_doc_for_other.json()["id"]
+
+    # Doctor registers themselves (doctor can also be a patient)
+    resp_reg_doc_self = client.post(
+        "/registrations",
+        json={"clinic_id": clinic_id},
+        headers=auth_header(doc_token),
+    )
+    assert resp_reg_doc_self.status_code == status.HTTP_201_CREATED
+    reg_doc_id = resp_reg_doc_self.json()["id"]
+
     # Patient lists own registrations
     resp_my = client.get("/registrations/me", headers=auth_header(pat_token))
     assert resp_my.status_code == status.HTTP_200_OK
     assert len(resp_my.json()) == 1
+
+    # Doctor (as patient) lists own registrations
+    resp_doc_my = client.get("/registrations/me", headers=auth_header(doc_token))
+    assert resp_doc_my.status_code == status.HTTP_200_OK
+    assert len(resp_doc_my.json()) == 1
 
     # Doctor lists registrations for clinic
     resp_doc = client.get(
@@ -165,8 +192,9 @@ def test_registration_flow(client: TestClient):
         headers=auth_header(doc_token),
     )
     assert resp_doc.status_code == status.HTTP_200_OK
-    assert len(resp_doc.json()) == 1
-    assert resp_doc.json()[0]["id"] == reg_id
+    assert len(resp_doc.json()) == 3
+    patient_ids = {r["patient_id"] for r in resp_doc.json()}
+    assert patient_ids == {pat_user["id"], pat2_id, doc_user["id"]}
 
     # Patient cancels
     resp_cancel = client.post(

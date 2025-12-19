@@ -2,11 +2,11 @@
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 
-from app.api.deps.auth import get_current_doctor, get_current_user
-from app.application.crud import clinic as clinic_crud
+from app.api.deps.auth import get_current_user
 from app.application.schemas.clinic import ClinicCreate, ClinicRead, ClinicUpdate
+from app.application.services import clinic_service
 from app.infrastructure.database import SessionDep
 from app.infrastructure.database.models.users_model import User
 
@@ -25,10 +25,10 @@ router = APIRouter()
 def create_clinic(
     payload: ClinicCreate,
     session: SessionDep,
-    current_doctor: User = Depends(get_current_doctor),
+    current_user: User = Depends(get_current_user),
 ):
     """Doctor creates a new clinic (time slot)."""
-    return clinic_crud.create_clinic(session, current_doctor.id, payload)
+    return clinic_service.create_clinic(session, current_user, payload)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -41,7 +41,7 @@ def get_clinic(
     _: User = Depends(get_current_user),
 ):
     """Get a single clinic by ID (any authenticated user)."""
-    return clinic_crud.get_clinic(session, clinic_id)
+    return clinic_service.get_clinic(session, clinic_id)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -54,7 +54,7 @@ def list_clinics(
     _: User = Depends(get_current_user),
 ):
     """List all clinics (optionally only active)."""
-    return clinic_crud.list_clinics(session, active_only)
+    return clinic_service.list_clinics(session, active_only)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -70,7 +70,7 @@ def list_clinics_by_doctor(
     _: User = Depends(get_current_user),
 ):
     """List clinics for a given doctor (any authenticated user can view)."""
-    return clinic_crud.list_clinics_by_doctor(session, doctor_id, active_only)
+    return clinic_service.list_clinics_by_doctor(session, doctor_id, active_only)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -81,15 +81,10 @@ def update_clinic(
     clinic_id: UUID,
     payload: ClinicUpdate,
     session: SessionDep,
-    current_doctor: User = Depends(get_current_doctor),
+    current_user: User = Depends(get_current_user),
 ):
     """Doctor updates their own clinic (capacity / is_active)."""
-    clinic = clinic_crud.get_clinic(session, clinic_id)
-    if clinic.doctor_id != current_doctor.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Not your clinic"
-        )
-    return clinic_crud.update_clinic(session, clinic_id, payload)
+    return clinic_service.update_clinic(session, current_user, clinic_id, payload)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -101,8 +96,8 @@ def update_clinic(
 def delete_clinic(
     clinic_id: UUID,
     session: SessionDep,
-    current_doctor: User = Depends(get_current_doctor),
+    current_user: User = Depends(get_current_user),
 ):
     """Doctor deletes their own clinic."""
-    clinic_crud.delete_clinic(session, clinic_id, doctor_id=current_doctor.id)
+    clinic_service.delete_clinic(session, current_user, clinic_id)
     return None

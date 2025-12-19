@@ -2,15 +2,15 @@
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Query, status
 
-from app.api.deps.auth import get_current_doctor, get_current_patient, get_current_user
-from app.application.crud import registration as reg_crud
+from app.api.deps.auth import get_current_user
 from app.application.schemas.registration import (
     RegistrationCreate,
     RegistrationRead,
     RegistrationUpdate,
 )
+from app.application.services import registration_service
 from app.infrastructure.database import SessionDep
 from app.infrastructure.database.models.constant import RegistrationStatus
 from app.infrastructure.database.models.users_model import User
@@ -19,7 +19,7 @@ router = APIRouter()
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# CREATE (patient self-register)
+# CREATE (patient/doctor register)
 # ──────────────────────────────────────────────────────────────────────────────
 @router.post(
     "/registrations",
@@ -30,10 +30,17 @@ router = APIRouter()
 def create_registration(
     payload: RegistrationCreate,
     session: SessionDep,
-    current_patient: User = Depends(get_current_patient),
+    current_user: User = Depends(get_current_user),
 ):
-    """Patient registers themselves for a clinic."""
-    return reg_crud.create_registration(session, payload.clinic_id, current_patient.id)
+    """Create registration.
+
+    - Patient callers register themselves (ignores patient_id).
+    - Doctor callers may register any patient_id or themselves if omitted.
+    """
+
+    return registration_service.create_registration(
+        session, current_user, payload.clinic_id, payload.patient_id
+    )
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -45,10 +52,12 @@ def create_registration(
 def list_my_registrations(
     session: SessionDep,
     include_cancelled: bool = Query(False),
-    current_patient: User = Depends(get_current_patient),
+    current_user: User = Depends(get_current_user),
 ):
     """Patient lists their own registrations."""
-    return reg_crud.list_by_patient(session, current_patient.id, include_cancelled)
+    return registration_service.list_my_registrations(
+        session, current_user, include_cancelled
+    )
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -65,7 +74,7 @@ def get_registration(
     _: User = Depends(get_current_user),
 ):
     """Get a single registration by ID (any authenticated user)."""
-    return reg_crud.get_registration(session, registration_id)
+    return registration_service.get_registration(session, registration_id)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -80,10 +89,12 @@ def list_registrations_by_clinic(
     clinic_id: UUID,
     session: SessionDep,
     status_filter: RegistrationStatus | None = None,
-    _: User = Depends(get_current_doctor),
+    current_user: User = Depends(get_current_user),
 ):
     """Doctor lists registrations for a specific clinic."""
-    return reg_crud.list_by_clinic(session, clinic_id, status_filter)
+    return registration_service.list_by_clinic(
+        session, current_user, clinic_id, status_filter
+    )
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -101,12 +112,9 @@ def update_registration(
     current_user: User = Depends(get_current_user),
 ):
     """Update a registration (owner or doctor can update)."""
-    reg = reg_crud.get_registration(session, registration_id)
-    # Only the patient who owns this or a doctor can update
-    if reg.patient_id != current_user.id and current_user.role.value != "doctor":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not allowed")
-    return reg_crud.update_registration(
+    return registration_service.update_registration(
         session,
+        current_user,
         registration_id,
         status_value=payload.status,
         cancelled_at=payload.cancelled_at,
@@ -127,10 +135,9 @@ def cancel_registration(
     current_user: User = Depends(get_current_user),
 ):
     """Cancel a registration (patient can cancel their own)."""
-    reg = reg_crud.get_registration(session, registration_id)
-    if reg.patient_id != current_user.id and current_user.role.value != "doctor":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not allowed")
-    return reg_crud.cancel_registration(session, registration_id)
+    return registration_service.cancel_registration(
+        session, current_user, registration_id
+    )
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -147,7 +154,5 @@ def delete_registration(
     current_user: User = Depends(get_current_user),
 ):
     """Delete a registration (only owner or doctor)."""
-    if current_user.role.value != "doctor":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not allowed")
-    reg_crud.delete_registration(session, registration_id)
+    registration_service.delete_registration(session, current_user, registration_id)
     return None
