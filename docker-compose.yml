@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+    db:
+        image: postgres:15
+        environment:
+            POSTGRES_USER: testuser
+            POSTGRES_PASSWORD: testpass
+            POSTGRES_DB: testdb
+        ports:
+            - '5433:5432'  # 使用不同端口避免與開發環境衝突
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+
+    app:
+        build: .
+        environment:
+            POSTGRES_USER: testuser
+            POSTGRES_PASSWORD: testpass
+            POSTGRES_SERVER: db
+            POSTGRES_PORT: 5432
+            POSTGRES_DB: testdb
+            ENVIRONMENT: development
+            PORT: 8000
+            HOST: 0.0.0.0
+            RELOAD: true
+            WORKERS: 1
+            DEVTEAM_PATH: /app
+            API_PREFIX: /api
+        ports:
+            - '8001:8000'  # 使用不同端口避免與開發環境衝突
+        depends_on:
+            - db
+        volumes:
+            - .:/app
+            - /app/__pycache__
+
+volumes:
+    postgres_data:

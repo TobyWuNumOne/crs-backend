@@ -1,0 +1,59 @@
+# Docker Compose for TEST environment
+# Uses different ports (5433 for database, 8001 for backend) to avoid conflicts with dev environment
+# Container names prefixed with 'crs-test-' to clearly separate from development containers
+
+services:
+    db:
+        container_name: crs-test-db
+        image: postgres:15
+        environment:
+            POSTGRES_USER: testuser
+            POSTGRES_PASSWORD: testpass
+            POSTGRES_DB: testdb
+        ports:
+            - '5433:5432' # 使用不同端口避免與開發環境衝突
+        volumes:
+            - crs_test_postgres_data:/var/lib/postgresql/data
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U testuser -d testdb']
+            interval: 5s
+            timeout: 5s
+            retries: 5
+        networks:
+            - crs-test-network
+
+    backend:
+        container_name: crs-test-backend
+        build: .
+        environment:
+            POSTGRES_USER: testuser
+            POSTGRES_PASSWORD: testpass
+            POSTGRES_SERVER: db
+            POSTGRES_PORT: 5432
+            POSTGRES_DB: testdb
+            ENVIRONMENT: test
+            PORT: 8000
+            HOST: 0.0.0.0
+            RELOAD: 'false'
+            WORKERS: 1
+            DEVTEAM_PATH: /app
+            API_PREFIX: /api
+            JWT_SECRET_KEY: test-secret-key-for-testing
+        ports:
+            - '8001:8000' # 使用不同端口避免與開發環境衝突
+        depends_on:
+            db:
+                condition: service_healthy
+        volumes:
+            - .:/app
+            - /app/__pycache__
+        networks:
+            - crs-test-network
+
+volumes:
+    crs_test_postgres_data:
+        name: crs_test_postgres_data
+
+networks:
+    crs-test-network:
+        name: crs-test-network
